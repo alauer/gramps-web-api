@@ -19,6 +19,14 @@ report_cache/
 *.gramps
 *.sqlite
 
+# Local-only operational artifacts — not for commit
+# .pi/        = Pi coding-agent memory store
+# BOOTSTRAP.md, MCP_PERFORMANCE_INVESTIGATION.md = external design notes
+#              shared with upstream GrampsWeb maintainers, never committed
+.pi/
+BOOTSTRAP.md
+MCP_PERFORMANCE_INVESTIGATION.md
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
