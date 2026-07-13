@@ -111,6 +111,22 @@ class GrampsObjectResourceHelper(GrampsJSONEncoder):
             obj.extended = get_extended_attributes(self.db_handle, obj, args)
         return obj
 
+    def _prefetch_extend_cache(self, args: dict) -> None:
+        """Pre-fetch related objects into request-scoped cache for batch extend."""
+        from flask import g
+
+        extend = args.get("extend", [])
+        if not extend:
+            return
+        if self.gramps_class_name != "Person":
+            return
+        family_fields = {"all", "family_list", "parent_family_list", "primary_parent_family"}
+        if family_fields & set(extend):
+            if not hasattr(g, "_family_extend_cache"):
+                g._family_extend_cache = {
+                    f.handle: f for f in self.db_handle.iter_families()
+                }
+
     def sort_objects(
         self, objects: list[GrampsObject], args: dict, locale: GrampsLocale = glocale
     ) -> list:
@@ -592,15 +608,23 @@ class GrampsObjectsResource(GrampsObjectResourceHelper, Resource):
         assert iter_objects_method is not None  # type checker
         objects = list(iter_objects_method())
 
-        # for all objects except events, repos, and notes, Gramps supports
-        # a database-backed default sort order. Use that if no sort order
-        # requested.
+        # defensive cap to prevent OOM on large databases
+        from flask import current_app
+
+        max_objects = current_app.config.get("MAX_OBJECTS_PER_REQUEST", 100_000)
+        if len(objects) > max_objects:
+            abort_with_message(
+                413,
+                f"Query would return {len(objects)} objects, "
+                f"exceeding the cap of {max_objects}. "
+                f"Use a more specific filter or pagination.",
+            )
+
+        # use handle-insertion order for default sort (avoids a second
+        # unbounded SQL query with locale-aware ORDER BY)
         query_method = self.db_handle.method("get_%s_handles", self.gramps_class_name)
         assert query_method is not None  # type checker
-        if self.gramps_class_name in ["Event", "Repository", "Note"]:
-            handles = query_method()
-        else:
-            handles = query_method(sort_handles=True, locale=locale)
+        handles = query_method()
         handle_index = {handle: index for index, handle in enumerate(handles)}
         # sort objects by the sorted handle order
         objects = sorted(
@@ -648,6 +672,8 @@ class GrampsObjectsResource(GrampsObjectResourceHelper, Resource):
         if args["page"] > 0:
             offset = (args["page"] - 1) * args["pagesize"]
             objects = objects[offset : offset + args["pagesize"]]
+
+        self._prefetch_extend_cache(args)
 
         return self.response(
             200,

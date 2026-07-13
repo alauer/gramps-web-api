@@ -22,6 +22,7 @@
 
 from typing import Dict
 
+from flask import g
 from gramps.gen.const import GRAMPS_LOCALE as glocale
 from gramps.gen.lib import Person
 from gramps.gen.utils.grampslocale import GrampsLocale
@@ -60,20 +61,39 @@ class PersonResourceHelper(GrampsObjectResourceHelper):
             )
         if "extend" in args:
             obj.extended = get_extended_attributes(db_handle, obj, args)
+            family_cache = getattr(g, "_family_extend_cache", None)
             if "all" in args["extend"] or "family_list" in args["extend"]:
-                obj.extended["families"] = [
-                    get_family_by_handle(db_handle, handle)
-                    for handle in obj.family_list
-                ]
+                if family_cache is not None:
+                    obj.extended["families"] = [
+                        family_cache[handle]
+                        for handle in obj.family_list
+                        if handle in family_cache
+                    ]
+                else:
+                    obj.extended["families"] = [
+                        get_family_by_handle(db_handle, handle)
+                        for handle in obj.family_list
+                    ]
             if "all" in args["extend"] or "parent_family_list" in args["extend"]:
-                obj.extended["parent_families"] = [
-                    get_family_by_handle(db_handle, handle)
-                    for handle in obj.parent_family_list
-                ]
+                if family_cache is not None:
+                    obj.extended["parent_families"] = [
+                        family_cache[handle]
+                        for handle in obj.parent_family_list
+                        if handle in family_cache
+                    ]
+                else:
+                    obj.extended["parent_families"] = [
+                        get_family_by_handle(db_handle, handle)
+                        for handle in obj.parent_family_list
+                    ]
             if "all" in args["extend"] or "primary_parent_family" in args["extend"]:
-                obj.extended["primary_parent_family"] = get_family_by_handle(
-                    db_handle, obj.get_main_parents_family_handle()
-                )
+                main_handle = obj.get_main_parents_family_handle()
+                if family_cache is not None and main_handle in family_cache:
+                    obj.extended["primary_parent_family"] = family_cache[main_handle]
+                else:
+                    obj.extended["primary_parent_family"] = get_family_by_handle(
+                        db_handle, main_handle
+                    )
         return obj
 
 

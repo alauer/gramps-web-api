@@ -108,6 +108,7 @@ class DefaultConfig(object):
     OIDC_NAME = "OIDC"
     PILLOW_MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
     MAX_THUMBNAIL_FILE_BYTES = 50 * 1024 * 1024  # 50 MB
+    MAX_OBJECTS_PER_REQUEST = 100_000
 
 
 class DefaultConfigJWT(object):
