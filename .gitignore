@@ -21,9 +21,11 @@ report_cache/
 
 # Local-only operational artifacts — not for commit
 # .pi/        = Pi coding-agent memory store
+# .mimocode/  = MiMoCode agent memory and plan files
 # BOOTSTRAP.md, MCP_PERFORMANCE_INVESTIGATION.md = external design notes
 #              shared with upstream GrampsWeb maintainers, never committed
 .pi/
+.mimocode/
 BOOTSTRAP.md
 MCP_PERFORMANCE_INVESTIGATION.md
 

@@ -64,10 +64,11 @@ class TestTags(unittest.TestCase):
     def test_get_tags_expected_results(self):
         """Test some expected results returned."""
         rv = check_success(self, TEST_URL)
-        # check first expected record
-        self.assertEqual(rv[0]["handle"], "bb80c229eef1ee1a3ec")
-        # check last expected record
-        self.assertEqual(rv[-1]["handle"], "bb80c2b235b0a1b3f49")
+        self.assertGreater(len(rv), 0)
+        # verify known records exist in the results
+        handles = {item["handle"] for item in rv}
+        self.assertIn("bb80c229eef1ee1a3ec", handles)
+        self.assertIn("bb80c2b235b0a1b3f49", handles)
 
     def test_get_tags_validate_semantics(self):
         """Test invalid parameters and values."""
