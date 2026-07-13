@@ -34,6 +34,7 @@ from .resources.bookmarks import (
     BookmarkResource,
     BookmarksResource,
 )
+from .resources.access_tokens import UserAccessTokenResource
 from .resources.chat import ChatResource
 from .resources.citations import CitationResource, CitationsResource
 from .resources.config import ConfigResource, ConfigsResource
@@ -149,6 +150,7 @@ from .resources.user import (
     UserTriggerResetPasswordResource,
 )
 from .resources.ydna import PersonYDnaResource
+from .resources.verify import VerifyResource
 from .blueprint import api_blueprint
 from .util import abort_with_message, get_db_handle, get_tree_from_jwt, parser, use_args
 
@@ -562,6 +564,12 @@ register_endpt(
 register_endpt(UsersResource, "/users/", "users", tags=["Users"])
 register_endpt(UserResource, "/users/<string:user_name>/", "user", tags=["Users"])
 register_endpt(
+    UserAccessTokenResource,
+    "/users/-/access-tokens/<string:scope>/",
+    "user_access_token",
+    tags=["Users"],
+)
+register_endpt(
     UserRegisterResource,
     "/users/<string:user_name>/register/",
     "register",
@@ -597,6 +605,11 @@ register_endpt(
 # Search
 register_endpt(SearchResource, "/search/", "search", tags=["Search"])
 register_endpt(SearchIndexResource, "/search/index/", "search_index", tags=["Search"])
+
+# Verify
+register_endpt(
+    VerifyResource, "/trees/<string:tree_id>/verify", "verify", tags=["Trees"]
+)
 
 # Chat
 register_endpt(ChatResource, "/chat/", "chat", tags=["Chat"])
